@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SearchView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import android.app.AlertDialog
@@ -32,8 +33,25 @@ class MainActivity : AppCompatActivity() {
 
         val btnCoolDown: Button = findViewById(R.id.btnCoolDown)
         val cbSelectAll: CheckBox = findViewById(R.id.cbSelectAll)
+        val searchView: SearchView = findViewById(R.id.searchView)
+
+        // Initialize adapter with empty list initially
+        adapter = AppListAdapter(appList)
+        recyclerView.adapter = adapter
 
         loadApps()
+
+        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
+            override fun onQueryTextSubmit(query: String?): Boolean {
+                adapter.filter(query ?: "")
+                return true
+            }
+
+            override fun onQueryTextChange(newText: String?): Boolean {
+                adapter.filter(newText ?: "")
+                return true
+            }
+        })
 
         cbSelectAll.setOnCheckedChangeListener { _, isChecked ->
             if (::adapter.isInitialized) {
@@ -68,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                startActivity(detailIntent)
             }
             
-            Toast.makeText(this, "Cooling down... Closing all selected apps", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Cooling down... Closing selected apps", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -88,7 +106,6 @@ class MainActivity : AppCompatActivity() {
                         val icon = pm.getApplicationIcon(packageInfo)
                         val packageName = packageInfo.packageName
                         
-                        // Mock battery percentage (0.1 to 15.0) since real API requires root
                         val batteryPct = Random.nextFloat() * 15.0f
                         
                         tempList.add(AppInfo(name, packageName, icon, batteryPct))
@@ -98,14 +115,12 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             
-            // Sort by highest battery usage first
             tempList.sortByDescending { it.batteryPercentage }
             
             runOnUiThread {
                 appList.clear()
                 appList.addAll(tempList)
-                adapter = AppListAdapter(appList)
-                recyclerView.adapter = adapter
+                adapter.updateFullList(tempList)
                 if (appList.isEmpty()) {
                    Toast.makeText(this@MainActivity, "No user apps found to display.", Toast.LENGTH_LONG).show()
                 }

@@ -8,9 +8,12 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import java.util.Locale
 
-class AppListAdapter(private val appList: List<AppInfo>) :
+class AppListAdapter(private var appList: List<AppInfo>) :
     RecyclerView.Adapter<AppListAdapter.AppViewHolder>() {
+
+    private var fullList: List<AppInfo> = ArrayList(appList)
 
     class AppViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         val appIcon: ImageView = view.findViewById(R.id.appIcon)
@@ -30,11 +33,9 @@ class AppListAdapter(private val appList: List<AppInfo>) :
         holder.appName.text = appInfo.name
         holder.appIcon.setImageDrawable(appInfo.icon)
         
-        // Show simulated battery usage
         val batteryText = String.format("Power consuming: %.1f%%", appInfo.batteryPercentage)
         holder.appBatteryUsage.text = batteryText
         
-        // Disable listener temporarily to prevent unwanted triggers during scrolling
         holder.appCheckbox.setOnCheckedChangeListener(null)
         holder.appCheckbox.isChecked = appInfo.isSelected
 
@@ -51,13 +52,31 @@ class AppListAdapter(private val appList: List<AppInfo>) :
     override fun getItemCount() = appList.size
     
     fun getSelectedApps(): List<AppInfo> {
-        return appList.filter { it.isSelected }
+        return fullList.filter { it.isSelected }
     }
     
     @SuppressLint("NotifyDataSetChanged")
     fun selectAll(selectAll: Boolean) {
         for (app in appList) {
             app.isSelected = selectAll
+        }
+        notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun updateFullList(newList: List<AppInfo>) {
+        this.fullList = ArrayList(newList)
+        this.appList = ArrayList(newList)
+        notifyDataSetChanged()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
+    fun filter(query: String) {
+        appList = if (query.isEmpty()) {
+            ArrayList(fullList)
+        } else {
+            val lowerCaseQuery = query.lowercase(Locale.getDefault())
+            fullList.filter { it.name.lowercase(Locale.getDefault()).contains(lowerCaseQuery) }
         }
         notifyDataSetChanged()
     }
