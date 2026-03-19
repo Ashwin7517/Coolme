@@ -115,7 +115,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             
-            tempList.sortByDescending { it.batteryPercentage }
+            tempList.sortBy { it.name.lowercase() }
             
             runOnUiThread {
                 appList.clear()
